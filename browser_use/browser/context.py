@@ -510,6 +510,7 @@ class BrowserContext:
 		dom_service = DomService(page)
 		content = await dom_service.get_clickable_elements()  # Assuming this is async
 
+		logger.info('Update state')
 		screenshot_b64 = None
 		if use_vision:
 			# Sometimes the screenshot is not enough to get the full page -> hence we miss fields
