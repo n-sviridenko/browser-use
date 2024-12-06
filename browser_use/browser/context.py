@@ -512,7 +512,8 @@ class BrowserContext:
 
 		screenshot_b64 = None
 		if use_vision:
-			screenshot_b64 = await self.take_screenshot()
+			# Sometimes the screenshot is not enough to get the full page -> hence we miss fields
+			screenshot_b64 = await self.take_screenshot(full_page=True)
 
 		self.current_state = BrowserState(
 			element_tree=content.element_tree,
