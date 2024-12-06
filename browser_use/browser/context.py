@@ -538,10 +538,11 @@ class BrowserContext:
 		logger.info('Internal zoom out')
 		# Make sure we can zoom out the page
 		# Sample: https://ezamowienia.gov.pl/mp-client/search/list/ocds-148610-71f17e58-2c45-41e1-890d-8b58d41b3059
-		await page.evaluate("""
-				document.documentElement.style.height = 'auto';
-				document.body.style.height = 'auto';
-		"""),
+		# await page.evaluate("""
+		# 		document.documentElement.style.height = 'auto';
+		# 		document.body.style.height = 'auto';
+		# """),
+		await page.set_viewport_size({"width": 1600, "height": 5000})
 		logger.info('Taking screenshot')
 		screenshot = await page.screenshot(
 			full_page=full_page,
