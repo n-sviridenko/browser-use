@@ -12,6 +12,10 @@ from playwright.async_api import (
 	Playwright,
 	async_playwright,
 )
+import tempfile
+import os
+import json
+import uuid
 
 from browser_use.browser.context import BrowserContext, BrowserContextConfig
 
@@ -104,7 +108,33 @@ class Browser:
 						'--disable-features=IsolateOrigins,site-per-process',
 					]
 
-				browser = await playwright.chromium.launch(
+
+					# Initial preferences file argument works only on ChromeOS: https://github.com/microsoft/playwright-python/issues/1758
+
+					# Solely listening to PDFs (https://github.com/microsoft/playwright/issues/7822) doesn't work w/o disabling PDF plugin
+
+					# Both persistent context + disabling plugin doesn't work https://github.com/microsoft/playwright/issues/20771#issuecomment-1423910442 (see --no-startup-window comment below)
+
+				preference = {
+						"plugins": {
+								"always_open_pdf_externally": True,
+								"open_pdf_in_system_reader": True,
+						},
+				}
+				# create temporary directory for preferences
+				# d = tempfile.mkdtemp()
+				# d = excutable directory
+				d = 'tmp/playwright'
+				d = os.path.join(os.getcwd(), d)
+
+				# d = os.path.dirname(os.path.abspath(__file__)) + "/tmp/" + "static" # uuid.uuid4().hex
+				preference_dir = os.path.join(d, "Default")
+				os.makedirs(preference_dir, mode=0o777, exist_ok=True)
+				# with open(preference_dir + "/Preferences", 'w') as f:
+				# 	json.dump(preference, f)
+
+				browser = await playwright.chromium.launch_persistent_context(
+					user_data_dir=d,
 					headless=self.config.headless,
 					args=[
 						'--no-sandbox',
@@ -118,13 +148,14 @@ class Browser:
 						'--disable-focus-on-load',
 						'--no-first-run',
 						'--no-default-browser-check',
-						'--no-startup-window',
+						'--no-startup-window', # This one makes it freeze when persistent context is used # and without BrowserContext doesn't have browser set
 						'--window-position=0,0',
 					]
 					+ disable_security_args
 					+ self.config.extra_chromium_args,
 					proxy=self.config.proxy
 				)
+				print('browser inside', browser)
 
 				return browser
 			except Exception as e:
