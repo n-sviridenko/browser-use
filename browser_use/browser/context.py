@@ -513,7 +513,7 @@ class BrowserContext:
 		logger.info('Update state')
 		screenshot_b64 = None
 		if use_vision:
-			screenshot_b64 = await self.take_screenshot()
+			screenshot_b64 = await self.take_screenshot(full_page=True)
 
 		self.current_state = BrowserState(
 			element_tree=content.element_tree,
@@ -534,15 +534,12 @@ class BrowserContext:
 		"""
 		page = await self.get_current_page()
 
-		logger.info('Internal zoom out')
 		# Make sure we can zoom out the page
 		# Sample: https://ezamowienia.gov.pl/mp-client/search/list/ocds-148610-71f17e58-2c45-41e1-890d-8b58d41b3059
-		# await page.evaluate("""
-		# 		document.documentElement.style.height = 'auto';
-		# 		document.body.style.height = 'auto';
-		# """),
-		await page.set_viewport_size({"width": 1600, "height": 5000})
-		logger.info('Taking screenshot')
+		await page.evaluate("""
+				document.documentElement.style.height = 'auto';
+				document.body.style.height = 'auto';
+		"""),
 		screenshot = await page.screenshot(
 			full_page=full_page,
 			animations='disabled',
