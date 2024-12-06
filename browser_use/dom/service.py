@@ -28,12 +28,29 @@ class DomService:
 		return DOMState(element_tree=element_tree, selector_map=selector_map)
 
 	async def _build_dom_tree(self, highlight_elements: bool) -> DOMElementNode:
-		js_code = resources.read_text('browser_use.dom', 'buildDomTree.js')
+		max_height_js_code = resources.read_text('browser_use.dom', 'findMaxScrollableHeight.js')
+		max_height = await self.page.evaluate(
+			max_height_js_code, []
+		)
+		print(f'Max height: {max_height}')
+		viewport = self.page.viewport_size
+		print(f'Viewport: {viewport}')
+		original_viewport = (viewport['width'], viewport['height'])
+		will_height_change = max_height > viewport['height']
+		if will_height_change:
+			print(f'Setting viewport to {max_height}')
+			self.page.set_viewport_size({"width": viewport['width'], "height": max_height})
 
+		js_code = resources.read_text('browser_use.dom', 'buildDomTree.js')
 		eval_page = await self.page.evaluate(
 			js_code, [highlight_elements]
 		)  # This is quite big, so be careful
 		html_to_dict = self._parse_node(eval_page)
+
+		if will_height_change:
+			print(f'Restoring viewport to {original_viewport}')
+			width, height = original_viewport
+			self.page.set_viewport_size({"width": width, "height": height})
 
 		if html_to_dict is None or not isinstance(html_to_dict, DOMElementNode):
 			raise ValueError('Failed to parse HTML to dictionary')
