@@ -1,6 +1,5 @@
 (
-    doHighlightElements = true,
-    isFullPageScreenshotNeeded = false
+    doHighlightElements = true
 ) => {
     let highlightIndex = 0; // Reset highlight index
 
@@ -250,13 +249,8 @@
     // Helper function to check if element is visible
     function isElementVisible(element) {
         const style = window.getComputedStyle(element);
-
-        const condition = isFullPageScreenshotNeeded ? true : (
-            element.offsetWidth > 0 &&
-            element.offsetHeight > 0
-        );
-
-        return condition &&
+        return element.offsetWidth > 0 &&
+            element.offsetHeight > 0 &&
             style.visibility !== 'hidden' &&
             style.display !== 'none';
     }
@@ -300,24 +294,8 @@
 
         try {
             const topEl = document.elementFromPoint(point.x, point.y);
-            if (!topEl) {
-                const range = document.createRange();
-                range.selectNodeContents(textNode);
-                const rect = range.getBoundingClientRect();
+            if (!topEl) return false;
 
-                // removed this in order to take full page screenshot
-                const isElementWithinViewport = (
-                    rect.top >= 0 &&
-                    rect.top <= window.innerHeight
-                );
-                // const isElementWithinViewport = element.offsetWidth > 0 && element.offsetHeight > 0;
-                // for elements outside of viewport, we need to return true if full page screenshot is needed
-                // TODO: figure out how to exclude iframes etc.
-                if (isFullPageScreenshotNeeded && !isElementWithinViewport) {
-                    return true;
-                }
-                return false;
-            }
             let current = topEl;
             while (current && current !== document.documentElement) {
                 if (current === element) return true;
@@ -335,15 +313,10 @@
         range.selectNodeContents(textNode);
         const rect = range.getBoundingClientRect();
 
-        // removed this in order to take full page screenshot
-        const condition = isFullPageScreenshotNeeded ? true : (
-            rect.top >= 0 &&
-            rect.top <= window.innerHeight
-        );
-
         return rect.width !== 0 &&
             rect.height !== 0 &&
-            condition &&
+            rect.top >= 0 &&
+            rect.top <= window.innerHeight &&
             textNode.parentElement?.checkVisibility({
                 checkOpacity: true,
                 checkVisibilityCSS: true
@@ -358,9 +331,6 @@
         // Special case for text nodes
         if (node.nodeType === Node.TEXT_NODE) {
             const textContent = node.textContent.trim();
-            if (textContent && textContent.includes('https://bip.ires.pl/gfx/nowasarzyna/files/DMiazga/2024/1_przetargi_unijne/7_e-uslugi/Zalacznik_nr_1.pdf')) {
-                console.log('text node found', textContent, isTextNodeVisible(node));
-            }
             if (textContent && isTextNodeVisible(node)) {
                 return {
                     type: "TEXT_NODE",
@@ -396,9 +366,6 @@
             const isInteractive = isInteractiveElement(node);
             const isVisible = isElementVisible(node);
             const isTop = isTopElement(node);
-            if (node.textContent && node.textContent?.trim() === 'https://bip.ires.pl/gfx/nowasarzyna/files/DMiazga/2024/1_przetargi_unijne/7_e-uslugi/Zalacznik_nr_1.pdf') {
-                console.log('element node found', node.textContent, { isInteractive, isVisible, isTop }, node);
-            }
 
             nodeData.isInteractive = isInteractive;
             nodeData.isVisible = isVisible;
