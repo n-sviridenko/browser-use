@@ -508,7 +508,7 @@ class BrowserContext:
 		await self.remove_highlights()
 		page = await self.get_current_page()
 		dom_service = DomService(page)
-		content = await dom_service.get_clickable_elements()  # Assuming this is async
+		content = await dom_service.get_clickable_elements(full_page=True)  # Assuming this is async
 
 		logger.info('Update state')
 		screenshot_b64 = None
