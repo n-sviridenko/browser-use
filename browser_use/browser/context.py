@@ -508,11 +508,13 @@ class BrowserContext:
 		await self.remove_highlights()
 		page = await self.get_current_page()
 		dom_service = DomService(page)
-		content = await dom_service.get_clickable_elements()  # Assuming this is async
+		print('Getting clickable elements (full page)')
+		content = await dom_service.get_clickable_elements(full_page=True)  # Assuming this is async
 
+		logger.info('Update state')
 		screenshot_b64 = None
 		if use_vision:
-			screenshot_b64 = await self.take_screenshot()
+			screenshot_b64 = await self.take_screenshot(full_page=True)
 
 		self.current_state = BrowserState(
 			element_tree=content.element_tree,
@@ -533,6 +535,12 @@ class BrowserContext:
 		"""
 		page = await self.get_current_page()
 
+		# Make sure we can zoom out the page
+		# Sample: https://ezamowienia.gov.pl/mp-client/search/list/ocds-148610-71f17e58-2c45-41e1-890d-8b58d41b3059
+		await page.evaluate("""
+				document.documentElement.style.height = 'auto';
+				document.body.style.height = 'auto';
+		"""),
 		screenshot = await page.screenshot(
 			full_page=full_page,
 			animations='disabled',
