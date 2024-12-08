@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # Action Input Models
@@ -16,6 +16,10 @@ class ClickElementAction(BaseModel):
 	index: int
 	num_clicks: int = 1
 	xpath: Optional[str] = None
+	download: bool = Field(
+			default=False,
+			description="If true, the browser will trigger a download by clicking the element. If false, the browser will click the element without triggering a download."
+	)
 
 
 class InputTextAction(BaseModel):

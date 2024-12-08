@@ -25,6 +25,7 @@ class ActionResult(BaseModel):
 	extracted_content: Optional[str] = None
 	error: Optional[str] = None
 	include_in_memory: bool = False  # whether to include in past messages as context or not
+	download_triggered: bool | None = None
 
 
 class AgentBrain(BaseModel):

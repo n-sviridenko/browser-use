@@ -70,20 +70,37 @@ class Controller:
 
 			msg = None
 
-			for _ in range(params.num_clicks):
+			download_triggered = False
+			if params.download:
+				page = await browser.get_current_page()
 				try:
-					await browser._click_element_node(element_node)
-					msg = f'🖱️  Clicked element {params.index}: {element_node.xpath}'
-					if params.num_clicks > 1:
-						msg += f' ({_ + 1}/{params.num_clicks} clicks)'
+					async with page.expect_download(timeout=5000) as download_info:
+						await browser._click_element_node(element_node)
+					download = await download_info.value
+					download_triggered = True
 				except Exception as e:
-					logger.warning(f'Element no longer available after {_ + 1} clicks: {str(e)}')
-					break
+					if len(session.context.pages) > initial_pages:
+						# TODO: handle PDF and other types here
+						pass
+					else:
+						logger.warning(f'Download failed: {str(e)}')
+				# `download_triggered` is not passed to the prompt: https://github.com/n-sviridenko/browser-use/blob/9c35b04f72346b56a0b431d7334fc4c99318149d/browser_use/agent/prompts.py#L128
+				msg = f'🖱️  Clicked element {params.index}: {element_node.xpath} (download triggered: {download_triggered})'
+			else:
+				for _ in range(params.num_clicks):
+					try:
+						await browser._click_element_node(element_node)
+						msg = f'🖱️  Clicked element {params.index}: {element_node.xpath}'
+						if params.num_clicks > 1:
+							msg += f' ({_ + 1}/{params.num_clicks} clicks)'
+					except Exception as e:
+						logger.warning(f'Element no longer available after {_ + 1} clicks: {str(e)}')
+						break
 
 			if len(session.context.pages) > initial_pages:
 				await browser.switch_to_tab(-1)
 
-			return ActionResult(extracted_content=f'{msg}')
+			return ActionResult(extracted_content=f'{msg}', download_triggered=download_triggered)
 
 		@self.registry.action('Input text', param_model=InputTextAction, requires_browser=True)
 		async def input_text(params: InputTextAction, browser: BrowserContext):
